@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>登录 · 苹果叶片病害智能识别系统</title>
+<style>
+  :root{
+    --g900:#0f2e1d; --g800:#16452c; --g700:#1e6b42; --g600:#2c8b57; --g500:#3aa76d;
+    --g50:#f2faf5;
+    --ink:#16241c; --ink2:#5b6f64; --ink3:#8ba095;
+    --line:#e2ede6;
+    --sh:0 2px 4px rgba(16,52,32,.04), 0 14px 36px rgba(16,52,32,.07);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{background:#f3f8f5}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei UI","Microsoft YaHei","PingFang SC",sans-serif;
+    color:var(--ink); line-height:1.6; min-height:100vh; position:relative;
+    display:flex; align-items:center; justify-content:center; padding:36px 18px;
+    background:
+      radial-gradient(900px 520px at 12% -60px, #ddf1e5 0%, rgba(221,241,229,0) 62%),
+      radial-gradient(820px 480px at 90% -30px, #e2edfc 0%, rgba(226,237,252,0) 58%),
+      linear-gradient(180deg, #f8fcf9 0%, #f1f7f3 100%);
+    background-repeat:no-repeat;
+  }
+
+  /* ---------- 背景叶片装饰 ---------- */
+  .deco{position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:0}
+  .deco svg{position:absolute; color:#3aa76d; fill:currentColor}
+  .deco .d1{width:210px;height:210px; top:-40px; left:-64px; transform:rotate(-16deg); opacity:.16}
+  .deco .d2{width:150px;height:150px; top:12%; right:-38px; transform:rotate(122deg); opacity:.15}
+  .deco .d3{width:180px;height:180px; bottom:-52px; right:8%; transform:rotate(200deg); opacity:.12}
+  .deco .d4{width:130px;height:130px; bottom:14%; left:-30px; transform:rotate(46deg); opacity:.14}
+  .deco .d5{width:110px;height:110px; top:-24px; right:22%; transform:rotate(-40deg); opacity:.10}
+
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  .wrap{position:relative; z-index:1; width:100%; max-width:400px; animation:rise .55s cubic-bezier(.22,.8,.24,1) both}
+
+  .brand{text-align:center; margin-bottom:24px}
+  .brand .logo{
+    display:inline-flex; align-items:center; justify-content:center; width:64px; height:64px;
+    border-radius:20px; color:#fff; background:linear-gradient(135deg,#2c8b57,#3aa76d);
+    box-shadow:0 10px 26px rgba(44,139,87,.30);
+  }
+  .brand h1{font-size:22px; font-weight:700; color:var(--g900); letter-spacing:.6px; margin-top:16px}
+  .brand p{font-size:13px; color:var(--ink2); margin-top:6px; letter-spacing:.3px}
+
+  .card{background:#fff; border:1px solid #eaf2ed; border-radius:22px; box-shadow:var(--sh); padding:30px 28px 26px}
+  .field{margin-top:16px}
+  .field:first-of-type{margin-top:0}
+  .field label{display:block; font-size:12.5px; color:var(--ink2); letter-spacing:.4px; margin-bottom:6px}
+  .input{
+    width:100%; padding:12px 14px; border:1.5px solid var(--line); border-radius:12px;
+    font:inherit; font-size:14.5px; color:var(--ink); background:#fbfdfc; outline:none;
+    transition:border-color .2s, background .2s, box-shadow .2s;
+  }
+  .input::placeholder{color:#b3c4ba}
+  .input:focus{border-color:var(--g500); background:#fff; box-shadow:0 0 0 4px rgba(58,167,109,.10)}
+  .err{
+    margin-top:16px; padding:10px 14px; border-radius:10px; font-size:13px;
+    background:#fff4f1; border:1px solid #f6d8d0; color:#b3402a;
+  }
+  .btn{
+    display:block; width:100%; margin-top:22px; padding:14px; border:none; border-radius:13px;
+    font-family:inherit; font-size:15.5px; font-weight:600; letter-spacing:8px; text-indent:8px; color:#fff;
+    background:linear-gradient(135deg,#2c8b57,#3aa76d); cursor:pointer;
+    box-shadow:0 6px 18px rgba(44,139,87,.26);
+    transition:transform .18s, box-shadow .18s;
+  }
+  .btn:hover{transform:translateY(-1px); box-shadow:0 10px 26px rgba(44,139,87,.32)}
+  .btn:active{transform:none; box-shadow:0 4px 12px rgba(44,139,87,.24)}
+  .hint{
+    margin-top:18px; padding:11px 14px; border-radius:10px; text-align:center;
+    background:var(--g50); border:1px dashed #cfe6d9; font-size:12.5px; color:var(--ink2);
+  }
+  .hint b{color:var(--g700); font-weight:600; letter-spacing:.5px}
+  .footer{text-align:center; font-size:11.5px; color:#a9bcb2; margin-top:22px; letter-spacing:.5px}
+
+  @media (max-width:600px){
+    .deco .d2,.deco .d5{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="deco" aria-hidden="true">
+  <svg width="0" height="0" style="position:absolute">
+    <defs>
+      <symbol id="leaf" viewBox="0 0 24 24">
+        <path fill="currentColor" d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
+        <path fill="none" stroke="rgba(255,255,255,.75)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
+      </symbol>
+      <symbol id="apple" viewBox="0 0 24 24">
+        <path fill="currentColor" d="M12 20.94c1.5 0 2.75 1.06 4 1.06 3 0 6-8 6-12.22A4.91 4.91 0 0 0 17 5c-2.22 0-4 1.44-5 2-1-.56-2.78-2-5-2a4.9 4.9 0 0 0-5 4.78C2 14 5 22 8 22c1.25 0 2.5-1.06 4-1.06Z"/>
+        <path fill="none" stroke="rgba(255,255,255,.75)" stroke-width="1.4" stroke-linecap="round" d="M10 2c1 .5 2 2 2 5"/>
+      </symbol>
+    </defs>
+  </svg>
+  <svg class="d1"><use href="#leaf"/></svg>
+  <svg class="d2"><use href="#leaf"/></svg>
+  <svg class="d3"><use href="#apple"/></svg>
+  <svg class="d4"><use href="#leaf"/></svg>
+  <svg class="d5"><use href="#apple"/></svg>
+</div>
+
+<div class="wrap">
+  <div class="brand">
+    <span class="logo">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
+        <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
+      </svg>
+    </span>
+    <h1>苹果叶片病害智能识别系统</h1>
+    <p>基于 Swin-T 深度学习模型 · 毕业设计演示系统</p>
+  </div>
+
+  <div class="card">
+    <form method="post" action="/login">
+      <div class="field">
+        <label for="username">用户名</label>
+        <input class="input" id="username" name="username" type="text" placeholder="请输入用户名" value="{{ username }}" required autofocus autocomplete="username">
+      </div>
+      <div class="field">
+        <label for="password">密码</label>
+        <input class="input" id="password" name="password" type="password" placeholder="请输入密码" required autocomplete="current-password">
+      </div>
+      {% if error %}<div class="err">⚠️ {{ error }}</div>{% endif %}
+      <button class="btn" type="submit">登录</button>
+    </form>
+    <div class="hint">演示账号：<b>admin</b> &nbsp;·&nbsp; 密码：<b>123456</b></div>
+  </div>
+
+  <div class="footer">毕业设计演示系统 · 仅供学术研究使用</div>
+</div>
+</body>
+</html>

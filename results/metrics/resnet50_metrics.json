@@ -1,0 +1,52 @@
+{
+  "model": "resnet50",
+  "epochs": 30,
+  "batch_size": 32,
+  "optimizer": "Adam",
+  "scheduler": "CosineAnnealingLR",
+  "backbone_lr": 1e-05,
+  "head_lr": 0.0001,
+  "seed": 42,
+  "train_size": 7304,
+  "val_size": 910,
+  "test_size": 919,
+  "best_val_acc": 0.9769,
+  "test_acc": 0.9815,
+  "macro_precision": 0.9779,
+  "macro_recall": 0.9734,
+  "macro_f1": 0.9756,
+  "weighted_f1": 0.9814,
+  "inference_ms_per_image": 3.76,
+  "per_class": {
+    "frogeye_leaf_spot": {
+      "precision": 0.9865,
+      "recall": 0.9821,
+      "f1": 0.9843,
+      "support": 224
+    },
+    "healthy": {
+      "precision": 0.9459,
+      "recall": 0.9459,
+      "f1": 0.9459,
+      "support": 37
+    },
+    "powdery_mildew": {
+      "precision": 0.9881,
+      "recall": 0.9881,
+      "f1": 0.9881,
+      "support": 84
+    },
+    "rust": {
+      "precision": 0.9946,
+      "recall": 0.9536,
+      "f1": 0.9737,
+      "support": 194
+    },
+    "scab": {
+      "precision": 0.9743,
+      "recall": 0.9974,
+      "f1": 0.9857,
+      "support": 380
+    }
+  }
+}

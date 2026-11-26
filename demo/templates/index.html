@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>苹果叶片病害智能识别系统</title>
+<style>
+  :root{
+    --g900:#0f2e1d; --g800:#16452c; --g700:#1e6b42; --g600:#2c8b57; --g500:#3aa76d;
+    --g50:#f2faf5;
+    --ink:#16241c; --ink2:#5b6f64; --ink3:#8ba095;
+    --line:#e2ede6; --line2:#eef5f0;
+    --amber:#b9760b; --amber-bg:#fffaf0; --amber-line:#f3e2bd;
+    --sh-sm:0 1px 2px rgba(16,52,32,.05), 0 2px 8px rgba(16,52,32,.04);
+    --sh:0 2px 4px rgba(16,52,32,.04), 0 14px 36px rgba(16,52,32,.07);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{background:#f3f8f5}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei UI","Microsoft YaHei","PingFang SC",sans-serif;
+    color:var(--ink); line-height:1.6; min-height:100vh; padding:44px 18px 56px; position:relative;
+    background:
+      radial-gradient(900px 520px at 10% -60px, #ddf1e5 0%, rgba(221,241,229,0) 62%),
+      radial-gradient(820px 480px at 94% -30px, #e2edfc 0%, rgba(226,237,252,0) 58%),
+      linear-gradient(180deg, #f8fcf9 0%, #f1f7f3 100%);
+    background-repeat:no-repeat;
+  }
+  .page{width:100%; max-width:760px; margin:0 auto; position:relative; z-index:1}
+
+  /* ---------- 背景叶片装饰 ---------- */
+  .deco{position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:0}
+  .deco svg{position:absolute; color:#3aa76d; fill:currentColor}
+  .deco .d1{width:190px;height:190px; top:-30px; left:-64px; transform:rotate(-16deg); opacity:.16}
+  .deco .d2{width:130px;height:130px; top:110px; right:-40px; transform:rotate(125deg); opacity:.15}
+  .deco .d3{width:160px;height:160px; top:38%; left:-56px; transform:rotate(58deg); opacity:.12}
+  .deco .d4{width:150px;height:150px; top:62%; right:-48px; transform:rotate(-110deg); opacity:.14}
+  .deco .d5{width:130px;height:130px; bottom:2%; left:4%; transform:rotate(26deg); opacity:.13}
+  .deco .d6{width:110px;height:110px; top:14%; right:12%; transform:rotate(200deg); opacity:.10}
+
+  /* ---------- 顶部用户栏 ---------- */
+  .userbar{display:flex; justify-content:flex-end; align-items:center; gap:14px; margin-bottom:10px; font-size:12.5px; color:var(--ink3)}
+  .userbar .who{
+    display:inline-flex; align-items:center; gap:5px; padding:3px 12px; border-radius:999px;
+    background:rgba(255,255,255,.75); border:1px solid #dcece3; color:var(--g700);
+  }
+  .userbar a{color:var(--ink3); text-decoration:none; border-bottom:1px dashed #c9dad0; padding-bottom:1px; transition:color .2s}
+  .userbar a:hover{color:var(--g700)}
+
+  @keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+  .page > *{animation:rise .55s cubic-bezier(.22,.8,.24,1) both}
+  .page > *:nth-child(3){animation-delay:.06s}
+  .page > *:nth-child(4){animation-delay:.12s}
+  .page > *:nth-child(5){animation-delay:.18s}
+
+  /* ---------- hero ---------- */
+  .hero{text-align:center}
+  .badge{
+    display:inline-flex; align-items:center; gap:7px; padding:5px 14px; border-radius:999px;
+    background:rgba(255,255,255,.78); border:1px solid #dcece3; color:var(--g700);
+    font-size:12.5px; font-weight:500; letter-spacing:.6px; box-shadow:0 1px 2px rgba(16,52,32,.04);
+  }
+  .hero h1{font-size:clamp(24px,4.4vw,31px); font-weight:700; letter-spacing:.8px; color:var(--g900); margin-top:16px}
+  .hero .sub{font-size:13.5px; color:var(--ink2); margin-top:7px; letter-spacing:.3px}
+  .chips{display:flex; flex-wrap:wrap; justify-content:center; gap:7px; margin-top:15px}
+  .chips span{
+    font-size:11.5px; color:var(--g700); background:rgba(255,255,255,.7);
+    border:1px solid #dcece3; border-radius:999px; padding:3px 11px; letter-spacing:.4px;
+  }
+
+  /* ---------- cards ---------- */
+  .card{
+    background:#fff; border:1px solid #eaf2ed; border-radius:22px;
+    box-shadow:var(--sh); padding:28px 30px; margin-top:18px;
+  }
+
+  /* ---------- upload ---------- */
+  .drop{
+    border:1.5px dashed #b9dbc7; border-radius:16px; padding:34px 20px 30px; text-align:center;
+    cursor:pointer; background:linear-gradient(180deg,#fcfefd,#f5faf7);
+    transition:border-color .2s, background .2s, box-shadow .2s;
+  }
+  .drop:hover, .drop.drag{border-color:var(--g500); background:#effaf3; box-shadow:0 0 0 4px rgba(58,167,109,.08)}
+  .drop .icon{color:var(--g500)}
+  .drop .t{margin-top:12px; font-size:15px; font-weight:500; color:var(--g800)}
+  .drop .t em{
+    font-style:normal; color:var(--g600);
+    text-decoration:underline; text-underline-offset:3px; text-decoration-thickness:1.5px;
+  }
+  .drop .hint{font-size:12px; color:var(--ink3); margin-top:6px; letter-spacing:.2px}
+
+  #preview{
+    display:none; max-width:280px; margin:22px auto 0; border-radius:14px;
+    border:1px solid var(--line); box-shadow:var(--sh-sm);
+  }
+  .btn{
+    display:block; width:100%; margin-top:20px; padding:15px; border:none; border-radius:14px;
+    font-family:inherit; font-size:16px; font-weight:600; letter-spacing:3px; color:#fff;
+    background:linear-gradient(135deg,#2c8b57,#3aa76d); cursor:pointer;
+    box-shadow:0 6px 18px rgba(44,139,87,.26);
+    transition:transform .18s, box-shadow .18s, background .2s, color .2s;
+  }
+  .btn:hover:not(:disabled){transform:translateY(-1px); box-shadow:0 10px 26px rgba(44,139,87,.32)}
+  .btn:active:not(:disabled){transform:none; box-shadow:0 4px 12px rgba(44,139,87,.24)}
+  .btn:disabled{background:#e6ece8; color:#a2b2a8; box-shadow:none; cursor:not-allowed}
+
+  /* ---------- result ---------- */
+  #result{display:none; margin-top:26px; animation:rise .4s cubic-bezier(.22,.8,.24,1)}
+  .top-result{
+    text-align:center; padding:26px 22px; border-radius:16px;
+    background:linear-gradient(135deg,#eaf8ef,#f7fdf9); border:1px solid #d5ebdd;
+  }
+  .top-result.reject{background:linear-gradient(135deg,#fff9ec,#fffdf7); border-color:var(--amber-line)}
+  .top-result .zh{font-size:30px; font-weight:700; letter-spacing:1px; color:var(--g800); line-height:1.3}
+  .top-result.reject .zh{color:var(--amber)}
+  .top-result .en{font-size:12.5px; color:var(--ink3); margin-top:4px; letter-spacing:.4px}
+  .top-result .prob{
+    display:inline-block; margin-top:11px; padding:4px 16px; border-radius:999px;
+    background:#fff; border:1px solid #d3e9dd; font-size:13.5px; font-weight:500; color:var(--g700);
+  }
+  .top-result.reject .prob{border-color:var(--amber-line); color:var(--amber)}
+  .advice{
+    margin-top:14px; padding:12px 16px; border-radius:12px; background:var(--amber-bg);
+    border:1px solid #f4e8cc; font-size:13.5px; color:#7a5a22;
+  }
+  .bars-cap{margin-top:22px; font-size:12px; color:var(--ink3); letter-spacing:.8px}
+  .bar-row{display:grid; grid-template-columns:92px 1fr 62px; align-items:center; gap:12px; margin-top:11px; font-size:13px}
+  .bar-row .label{color:var(--ink2)}
+  .bar-track{height:10px; border-radius:999px; background:#eef4f0; overflow:hidden}
+  .bar-fill{
+    height:100%; border-radius:999px; background:linear-gradient(90deg,#2f9e63,#74d29d);
+    transition:width .65s cubic-bezier(.22,.8,.24,1);
+  }
+  .bar-row .pct{text-align:right; font-weight:600; color:var(--g700); font-variant-numeric:tabular-nums}
+
+  /* ---------- section heading ---------- */
+  .sec-head{display:flex; align-items:center; gap:10px; margin-bottom:18px}
+  .sec-num{
+    font-size:11px; font-weight:700; letter-spacing:.5px; color:var(--g600);
+    background:var(--g50); border:1px solid #dcebe2; border-radius:8px; padding:2px 7px;
+  }
+  .sec-head h2{font-size:16.5px; font-weight:600; color:var(--g900); letter-spacing:.4px; white-space:nowrap}
+  .sec-head .line{flex:1; height:1px; background:linear-gradient(90deg,var(--line),transparent)}
+  .sec-meta{font-size:12px; color:var(--ink3); white-space:nowrap}
+
+  /* ---------- stats ---------- */
+  .stats{display:grid; grid-template-columns:repeat(3,1fr); gap:12px}
+  .stat{
+    background:linear-gradient(180deg,#f6fcf8,#eef8f2); border:1px solid #dfeee6;
+    border-radius:16px; padding:17px 10px 15px; text-align:center;
+  }
+  .stat .num{
+    font-size:25px; font-weight:700; color:var(--g700); letter-spacing:-.6px;
+    line-height:1.25; font-variant-numeric:tabular-nums;
+  }
+  .stat .lab{font-size:12px; color:var(--ink3); margin-top:3px; letter-spacing:.4px}
+
+  /* ---------- tables ---------- */
+  .tbl{margin-top:16px; border:1px solid var(--line); border-radius:16px; overflow:hidden}
+  table{width:100%; border-collapse:collapse; font-size:13px}
+  thead th{
+    background:var(--g50); color:var(--g800); font-weight:600; font-size:12.5px;
+    letter-spacing:.3px; padding:10px 6px; border-bottom:1px solid var(--line); text-align:center;
+  }
+  thead th:first-child{text-align:left; padding-left:14px}
+  tbody td{
+    padding:9px 6px; text-align:center; border-bottom:1px solid var(--line2);
+    font-variant-numeric:tabular-nums; color:#2a3b31;
+  }
+  tbody td:first-child{text-align:left; padding-left:14px; font-weight:500}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover td{background:#f8fcfa}
+  tbody tr.best td{background:#eef9f2; font-weight:600; color:var(--g800)}
+  tbody tr.best td:first-child{box-shadow:inset 3px 0 0 var(--g500)}
+
+  /* ---------- figures ---------- */
+  .cm{display:block; width:100%; margin-top:16px; border-radius:16px; border:1px solid var(--line); background:#fff}
+  .note{font-size:12px; color:var(--ink3); line-height:1.7; margin-top:12px}
+
+  .footer{text-align:center; color:#a9bcb2; font-size:12px; margin-top:26px; letter-spacing:.5px}
+
+  @media (max-width:600px){
+    body{padding:28px 14px 44px}
+    .deco .d3,.deco .d4,.deco .d6{display:none}
+    .deco .d1{width:130px;height:130px;top:-20px;left:-46px}
+    .deco .d2{width:90px;height:90px;top:70px;right:-24px}
+    .deco .d5{width:100px;height:100px}
+    .card{padding:22px 18px; border-radius:18px}
+    .stat .num{font-size:21px}
+    .bar-row{grid-template-columns:78px 1fr 56px; gap:9px; font-size:12.5px}
+    table{font-size:12px}
+    thead th, tbody td{padding:8px 4px}
+    .sec-meta{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="deco" aria-hidden="true">
+  <svg width="0" height="0" style="position:absolute">
+    <defs>
+      <symbol id="leaf" viewBox="0 0 24 24">
+        <path fill="currentColor" d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
+        <path fill="none" stroke="rgba(255,255,255,.75)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
+      </symbol>
+      <symbol id="apple" viewBox="0 0 24 24">
+        <path fill="currentColor" d="M12 20.94c1.5 0 2.75 1.06 4 1.06 3 0 6-8 6-12.22A4.91 4.91 0 0 0 17 5c-2.22 0-4 1.44-5 2-1-.56-2.78-2-5-2a4.9 4.9 0 0 0-5 4.78C2 14 5 22 8 22c1.25 0 2.5-1.06 4-1.06Z"/>
+        <path fill="none" stroke="rgba(255,255,255,.75)" stroke-width="1.4" stroke-linecap="round" d="M10 2c1 .5 2 2 2 5"/>
+      </symbol>
+    </defs>
+  </svg>
+  <svg class="d1"><use href="#leaf"/></svg>
+  <svg class="d2"><use href="#leaf"/></svg>
+  <svg class="d3"><use href="#leaf"/></svg>
+  <svg class="d4"><use href="#apple"/></svg>
+  <svg class="d5"><use href="#leaf"/></svg>
+  <svg class="d6"><use href="#apple"/></svg>
+</div>
+<div class="page">
+  <div class="userbar">
+    <span class="who">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      {{ username }}
+    </span>
+    <a href="/logout">退出登录</a>
+  </div>
+  <header class="hero">
+    <div class="badge">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
+      毕业设计演示系统
+    </div>
+    <h1>苹果叶片病害智能识别</h1>
+    <p class="sub">基于 Swin-T 深度学习模型 · 支持 4 类病害与健康叶片识别</p>
+    <div class="chips">
+      <span>黑星病</span><span>蛙眼叶斑病</span><span>锈病</span><span>白粉病</span><span>健康</span>
+    </div>
+  </header>
+
+  <section class="card">
+    <div class="drop" id="drop">
+      <svg class="icon" width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="17 8 12 3 7 8"/>
+        <line x1="12" y1="3" x2="12" y2="15"/>
+      </svg>
+      <p class="t">拖拽叶片图片到这里，或 <em>点击选择</em></p>
+      <p class="hint">支持 JPG / PNG 格式，建议拍摄清晰的单张叶片</p>
+    </div>
+    <input type="file" id="file" accept="image/*" hidden>
+
+    <img id="preview" alt="预览">
+    <button class="btn" id="btn" disabled>识别病害</button>
+
+    <div id="result">
+      <div class="top-result" id="r-top">
+        <div class="zh" id="r-zh"></div>
+        <div class="en" id="r-en"></div>
+        <div class="prob" id="r-prob"></div>
+      </div>
+      <div class="advice" id="r-advice"></div>
+      <div class="bars-cap">各类别置信度</div>
+      <div id="bars"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="sec-head">
+      <span class="sec-num">01</span>
+      <h2>模型性能</h2>
+      <span class="line"></span>
+      <span class="sec-meta">Swin-T · 测试集 919 张</span>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="num">98.80%</div><div class="lab">总体准确率</div></div>
+      <div class="stat"><div class="num">98.51%</div><div class="lab">宏平均 F1</div></div>
+      <div class="stat"><div class="num">98.80%</div><div class="lab">加权 F1</div></div>
+    </div>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>类别</th><th>精确率</th><th>召回率</th><th>F1</th></tr></thead>
+        <tbody>
+          <tr><td>黑星病</td><td>98.95%</td><td>98.95%</td><td>98.95%</td></tr>
+          <tr><td>蛙眼叶斑病</td><td>98.24%</td><td>99.55%</td><td>98.89%</td></tr>
+          <tr><td>锈病</td><td>98.46%</td><td>98.97%</td><td>98.71%</td></tr>
+          <tr><td>白粉病</td><td>100.00%</td><td>97.62%</td><td>98.80%</td></tr>
+          <tr><td>健康</td><td>100.00%</td><td>94.59%</td><td>97.22%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <img class="cm" src="/static/swin_t_confusion_matrix.png" alt="Swin-T 在 5 类测试集上的混淆矩阵">
+  </section>
+
+  <section class="card">
+    <div class="sec-head">
+      <span class="sec-num">02</span>
+      <h2>三模型对比</h2>
+      <span class="line"></span>
+      <span class="sec-meta">同数据划分 · 同训练策略</span>
+    </div>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>模型</th><th>参数量</th><th>准确率</th><th>宏平均 F1</th><th>加权 F1</th><th>单张推理</th></tr></thead>
+        <tbody>
+          <tr><td>ResNet50</td><td>25.56 M</td><td>98.15%</td><td>97.56%</td><td>98.14%</td><td>3.76 ms</td></tr>
+          <tr><td>MobileNetV3-Large</td><td>5.48 M</td><td>97.93%</td><td>97.56%</td><td>97.92%</td><td>4.02 ms</td></tr>
+          <tr class="best"><td>Swin-T（本系统）</td><td>28.29 M</td><td>98.80%</td><td>98.51%</td><td>98.80%</td><td>8.77 ms</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">
+      三模型使用同一数据划分与训练策略：ImageNet-1K 预训练、交叉熵损失（CrossEntropyLoss）、
+      Adam（主干 1e-5 / 分类头 1e-4）、余弦退火、30 轮、batch 32。参数量为 ImageNet-1000
+      标准结构值；本文分类层改为 5 类，MobileNetV3-Large 实测 4.21 M。
+    </p>
+    <img class="cm" src="/static/three_model_curves.png" alt="三模型训练损失与验证准确率曲线">
+    <p class="note">
+      左：训练损失（交叉熵）随轮次下降；右：验证集准确率。Swin-T 损失最低、验证准确率最高，
+      其测试集准确率 98.80%，故选为系统部署模型。
+    </p>
+  </section>
+
+  <div class="footer">毕业设计演示系统 · 仅供学术研究使用</div>
+</div>
+
+<script>
+const ADVICE = {
+  "frogeye_leaf_spot": "建议清除落叶减少菌源，喷施多菌灵等药剂。",
+  "healthy": "叶片未见明显病斑，建议保持田间管理、定期巡查。",
+  "powdery_mildew": "建议改善通风透光，发病初期喷施三唑类或醚菌酯等药剂。",
+  "rust": "建议清除周边桧柏等转主寄主，喷施戊唑醇等药剂。",
+  "scab": "建议清理落叶病果，花前花后喷施氟硅唑等药剂。",
+};
+
+const drop = document.getElementById("drop");
+const fileInput = document.getElementById("file");
+const preview = document.getElementById("preview");
+const btn = document.getElementById("btn");
+const result = document.getElementById("result");
+let selectedFile = null;
+
+drop.addEventListener("click", () => fileInput.click());
+drop.addEventListener("dragover", e => { e.preventDefault(); drop.classList.add("drag"); });
+drop.addEventListener("dragleave", () => drop.classList.remove("drag"));
+drop.addEventListener("drop", e => {
+  e.preventDefault(); drop.classList.remove("drag");
+  if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener("change", () => handleFile(fileInput.files[0]));
+
+function handleFile(f) {
+  if (!f || !f.type.startsWith("image/")) { alert("请选择图片文件"); return; }
+  selectedFile = f;
+  const reader = new FileReader();
+  reader.onload = e => { preview.src = e.target.result; preview.style.display = "block"; };
+  reader.readAsDataURL(f);
+  btn.disabled = false;
+  result.style.display = "none";
+}
+
+btn.addEventListener("click", async () => {
+  if (!selectedFile) return;
+  btn.disabled = true; btn.textContent = "识别中…";
+  const fd = new FormData();
+  fd.append("image", selectedFile);
+  try {
+    const resp = await fetch("/predict", { method: "POST", body: fd });
+    const data = await resp.json();
+    if (data.error) { alert(data.error); return; }
+    render(data);
+  } catch (err) {
+    alert("识别失败：请确认后端已启动（python app.py）");
+  } finally {
+    btn.disabled = false; btn.textContent = "识别病害";
+  }
+});
+
+function render(data) {
+  const box = document.getElementById("r-top");
+  if (data.rejected) {
+    box.classList.add("reject");
+    document.getElementById("r-zh").textContent = "⚠️ 无法识别";
+    document.getElementById("r-en").textContent = "不属于已知的 5 类叶片状态";
+    document.getElementById("r-prob").textContent = "最高置信度仅 " + data.top_prob + "%，低于判定阈值";
+    document.getElementById("r-advice").textContent = "💡 请上传清晰的苹果叶片照片再试";
+  } else {
+    box.classList.remove("reject");
+    const top = data.results[0];
+    document.getElementById("r-zh").textContent = top.zh;
+    document.getElementById("r-en").textContent = top.name;
+    document.getElementById("r-prob").textContent = "置信度 " + top.prob + "%";
+    document.getElementById("r-advice").textContent = "💡 " + (ADVICE[top.name] || "");
+  }
+  document.getElementById("bars").innerHTML = data.results.map(d => `
+    <div class="bar-row">
+      <span class="label">${d.zh}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:${d.prob}%"></div></div>
+      <span class="pct">${d.prob}%</span>
+    </div>`).join("");
+  result.style.display = "block";
+  result.scrollIntoView({ behavior: "smooth" });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+{
+  "model": "swin_t",
+  "epochs": 30,
+  "batch_size": 32,
+  "optimizer": "Adam",
+  "scheduler": "CosineAnnealingLR",
+  "backbone_lr": 1e-05,
+  "head_lr": 0.0001,
+  "seed": 42,
+  "train_size": 7304,
+  "val_size": 910,
+  "test_size": 919,
+  "best_val_acc": 0.9846,
+  "test_acc": 0.988,
+  "macro_precision": 0.9913,
+  "macro_recall": 0.9794,
+  "macro_f1": 0.9851,
+  "weighted_f1": 0.988,
+  "inference_ms_per_image": 8.77,
+  "per_class": {
+    "frogeye_leaf_spot": {
+      "precision": 0.9824,
+      "recall": 0.9955,
+      "f1": 0.9889,
+      "support": 224
+    },
+    "healthy": {
+      "precision": 1.0,
+      "recall": 0.9459,
+      "f1": 0.9722,
+      "support": 37
+    },
+    "powdery_mildew": {
+      "precision": 1.0,
+      "recall": 0.9762,
+      "f1": 0.988,
+      "support": 84
+    },
+    "rust": {
+      "precision": 0.9846,
+      "recall": 0.9897,
+      "f1": 0.9871,
+      "support": 194
+    },
+    "scab": {
+      "precision": 0.9895,
+      "recall": 0.9895,
+      "f1": 0.9895,
+      "support": 380
+    }
+  }
+}

@@ -1,0 +1,26 @@
+# 数据与权重（体积大，不入库）
+data/
+data_*/
+removed_classes_backup/
+*.zip
+*.pth
+*.pt
+*.onnx
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# IDE / 系统
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# 训练输出（按需保留 metrics，不传临时文件）
+results/local_eval/
+*.log
